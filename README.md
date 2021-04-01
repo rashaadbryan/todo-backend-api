@@ -44,7 +44,7 @@ A simple RESTful API for tasks built using Amazon Web Services (AWS)
 
 - At the route of the directory run the comment `sam local start-api`.
 - The lambda functions will be mounted at 127.0.0.1 (localhost).
-- E.g. Mounting CreateTaskFunction at http://127.0.0.1:3000/task [POST]
+- E.g. `Mounting CreateTaskFunction at http://127.0.0.1:3000/task [POST]`
 - In order for the lambda functions to query the database the database it must be created on AWS. See the AWS Deploymeny section for instructions.
 
 
