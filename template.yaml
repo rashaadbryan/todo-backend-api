@@ -1,0 +1,175 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Backend API for todo application 
+
+Globals:
+  Function:
+    Timeout: 3
+    MemorySize: 128
+
+Resources:
+  TodoApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: dev
+
+  CreateTaskFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: create-task/
+      Handler: app.lambdaHandler
+      Runtime: nodejs14.x
+      Tracing: Active
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: TaskTable
+      # Layers:
+      #   - !Ref JSONValidationLambdaLayer
+      Events:
+        CreateTaskAPI:
+          Type: HttpApi 
+          Properties:
+            ApiId: !Ref TodoApi
+            Path: /task
+            Method: post
+
+  ReadTasksFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: read-tasks/
+      Handler: app.lambdaHandler
+      Runtime: nodejs14.x
+      Tracing: Active
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: TaskTable
+      Events:
+        ReadTasksAPI:
+          Type: HttpApi 
+          Properties:
+            ApiId: !Ref TodoApi
+            Path: /task
+            Method: get
+
+  ReadTaskFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: read-task/
+      Handler: app.lambdaHandler
+      Runtime: nodejs14.x
+      Tracing: Active
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: TaskTable
+      Events:
+        ReadTaskAPI:
+          Type: HttpApi 
+          Properties:
+            ApiId: !Ref TodoApi
+            Path: /task/{id}
+            Method: get
+
+  UpdateTaskFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: update-task/
+      Handler: app.lambdaHandler
+      Runtime: nodejs14.x
+      Tracing: Active
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: TaskTable
+      Events:
+        ReadTaskAPI:
+          Type: HttpApi 
+          Properties:
+            ApiId: !Ref TodoApi
+            Path: /task/{id}
+            Method: put
+
+  DeleteTaskFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: delete-task/
+      Handler: app.lambdaHandler
+      Runtime: nodejs14.x
+      Tracing: Active
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: TaskTable
+      Events:
+        DeleteTaskAPI:
+          Type: HttpApi 
+          Properties:
+            ApiId: !Ref TodoApi
+            Path: /task/{id}
+            Method: delete
+
+  TaskDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: TaskTable
+      AttributeDefinitions: 
+        - AttributeName: id
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+  
+  # JSONValidationLambdaLayer:
+  #   Type: AWS::Serverless::LayerVersion
+  #   Properties:
+  #     LayerName: JSONValidationLambdaLayer
+  #     Description: Lambda layer for json validation
+  #     ContentUri: layers/json-validation-layer/index.zip
+  #     CompatibleRuntimes:
+  #       - nodejs14.x
+  #     LicenseInfo: MIT
+  #     RetentionPolicy: Retain
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL for Dev stage for task resource"
+    Value: !Sub "https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/dev/"
+  ApiId:
+    Description: HttpApi ID
+    Value: !Ref TodoApi
+  CreateTaskFunction:
+    Description: "Create Task Lambda Function ARN"
+    Value: !GetAtt CreateTaskFunction.Arn
+  CreateTaskFunctionIamRole:
+    Description: "Implicit IAM Role created for Create Task function"
+    Value: !GetAtt CreateTaskFunctionRole.Arn
+  ReadTasksFunction:
+    Description: "Read Tasks Lambda Function ARN"
+    Value: !GetAtt ReadTasksFunction.Arn
+  ReadTasksFunctionIamRole:
+    Description: "Implicit IAM Role created for Read Tasks function"
+    Value: !GetAtt ReadTasksFunctionRole.Arn
+  ReadTaskFunction:
+    Description: "Read Task Lambda Function ARN"
+    Value: !GetAtt ReadTaskFunction.Arn
+  ReadTaskFunctionIamRole:
+    Description: "Implicit IAM Role created for Read Task function"
+    Value: !GetAtt ReadTaskFunctionRole.Arn
+  UpdateTaskFunction:
+    Description: "Update Task Lambda Function ARN"
+    Value: !GetAtt UpdateTaskFunction.Arn
+  UpdateTaskFunctionIamRole:
+    Description: "Implicit IAM Role created for Update Task function"
+    Value: !GetAtt UpdateTaskFunctionRole.Arn
+  DeleteTaskFunction:
+    Description: "Delete Task Lambda Function ARN"
+    Value: !GetAtt DeleteTaskFunction.Arn
+  DeleteTaskFunctionIamRole:
+    Description: "Implicit IAM Role created for Delete Task function"
+    Value: !GetAtt DeleteTaskFunctionRole.Arn
+  # JSONValidationLambdaLayer:
+  #   Description: "JSON Validation Lambda Layer ARN"
+  #   Value: !GetAtt JSONValidationLambdaLayer.Arn
